@@ -1,4 +1,13 @@
-# Miscellaneous
+/.env
+.env
+.flutter-plugins
+.flutter-plugins-dependencies
+.dart_tool/
+/.idea/
+build/
+.packages
+pubspec.lock
+android/local.properties# Miscellaneous
 *.class
 *.log
 *.pyc
