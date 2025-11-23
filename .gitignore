@@ -1,13 +1,4 @@
-/.env
-.env
-.flutter-plugins
-.flutter-plugins-dependencies
-.dart_tool/
-/.idea/
-build/
-.packages
-pubspec.lock
-android/local.properties# Miscellaneous
+# Miscellaneous
 *.class
 *.log
 *.pyc
