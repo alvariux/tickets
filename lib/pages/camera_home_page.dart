@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:tickets/services/camara_service.dart';
+import 'package:tickets/services/api_service.dart';
 import 'package:image_cropper/image_cropper.dart';
 
 class CameraHomePage extends StatefulWidget {
@@ -13,6 +14,7 @@ class CameraHomePage extends StatefulWidget {
 
 class _CameraHomePageState extends State<CameraHomePage> {
   String? _imagePath;
+  bool _uploading = false;
   final CamaraService _camara = CamaraService();
 
   Future<void> _takePhoto() async {
@@ -44,6 +46,34 @@ class _CameraHomePageState extends State<CameraHomePage> {
       setState(() => _imagePath = cropped?.path ?? path);
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al seleccionar imagen: $e')));
+    }
+  }
+
+  Future<void> _uploadImage() async {
+    if (_imagePath == null) return;
+    final file = File(_imagePath!);
+    if (!await file.exists()) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Archivo de imagen no existe')));
+      return;
+    }
+    setState(() => _uploading = true);
+    try {
+      final response = await ApiService().uploadImage(file);
+      if (!mounted) return;
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Imagen enviada correctamente')));
+      } else {
+        // Mostrar body para diagnóstico si hay fallo
+        final body = response.body;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al enviar: ${response.statusCode}')));
+        debugPrint('Upload failed: status=${response.statusCode} body=$body');
+      }
+    } catch (e, st) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al enviar imagen: $e')));
+      debugPrint('Error uploading image: $e');
+      debugPrint('$st');
+    } finally {
+      if (mounted) setState(() => _uploading = false);
     }
   }
 
@@ -107,6 +137,11 @@ class _CameraHomePageState extends State<CameraHomePage> {
                   onPressed: _pickFromGallery,
                   icon: const Icon(Icons.photo_library),
                   label: const Text('Galería'),
+                ),
+                ElevatedButton.icon(
+                  onPressed: (_imagePath == null || _uploading) ? null : _uploadImage,
+                  icon: _uploading ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.upload),
+                  label: const Text('Enviar'),
                 ),
               ],
             ),
