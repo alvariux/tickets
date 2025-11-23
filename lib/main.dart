@@ -8,8 +8,7 @@ Future<void> main() async {
 	FlutterError.onError = (FlutterErrorDetails details) {
 		FlutterError.dumpErrorToConsole(details);
 	};
-
-	debugPrint('startup: runApp');
+	
 	runApp(const MyApp());
 }
 

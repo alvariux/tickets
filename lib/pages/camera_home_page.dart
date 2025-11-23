@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:tickets/services/camara_service.dart';
+import 'package:image_cropper/image_cropper.dart';
 
 class CameraHomePage extends StatefulWidget {
   const CameraHomePage({super.key});
@@ -22,7 +23,9 @@ class _CameraHomePageState extends State<CameraHomePage> {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No se tomó ninguna foto')));
         return;
       }
-      setState(() => _imagePath = path);
+      final cropped = await _cropImage(File(path));
+      if (!mounted) return;
+      setState(() => _imagePath = cropped?.path ?? path);
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al tomar foto: $e')));
     }
@@ -36,9 +39,38 @@ class _CameraHomePageState extends State<CameraHomePage> {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No se seleccionó ninguna imagen')));
         return;
       }
-      setState(() => _imagePath = path);
+      final cropped = await _cropImage(File(path));
+      if (!mounted) return;
+      setState(() => _imagePath = cropped?.path ?? path);
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al seleccionar imagen: $e')));
+    }
+  }
+
+  Future<File?> _cropImage(File imageFile) async {
+    try {
+      final croppedFile = await ImageCropper().cropImage(
+        sourcePath: imageFile.path,
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: 'Recortar',
+            toolbarColor: Colors.black,
+            toolbarWidgetColor: Colors.white,
+            initAspectRatio: CropAspectRatioPreset.original,
+            lockAspectRatio: false,
+            hideBottomControls: false,
+          ),
+          IOSUiSettings(
+            title: 'Recortar',
+          ),
+        ],
+      );
+
+      if (croppedFile == null) return null;
+      return File(croppedFile.path);
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al recortar imagen: $e')));
+      return null;
     }
   }
 
